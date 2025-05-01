@@ -31,28 +31,3 @@ def fetch_all_places(location, radius=10000, place_type="tourist_attraction"):
         time.sleep(2)  # 최소 2초 대기 필요
 
     return all_results
-
-def fetch_place_details(place_id):
-    """Place Details API를 호출하여 장소 세부 정보를 가져오기"""
-    params = {
-        "place_id": place_id,
-        "fields": "formatted_address,opening_hours,website,international_phone_number",
-        "language": LANGUAGE,
-        "key": API_KEY
-    }
-    try:
-        response = requests.get(PLACE_DETAILS_URL, params=params)
-        response.raise_for_status()
-        data = response.json()
-
-        if "result" in data:
-            result = data["result"]
-            return {
-                "formatted_address": result.get("formatted_address", "정보 없음"),
-                "opening_hours": result.get("opening_hours", {}).get("weekday_text", "영업시간 정보 없음"),
-                "website": result.get("website", "웹사이트 없음"),
-                "phone_number": result.get("international_phone_number", "전화번호 없음")
-            }
-    except Exception as e:
-        print(f"[ERROR] Details API 호출 실패 (place_id: {place_id}): {e}")
-    return None

@@ -1,98 +1,89 @@
+# MySQL 연결 함수와 contextmanager 가져오기
 from database.db_connection import get_connection
+from contextlib import contextmanager
 
-def save_to_database(data):
-    """MySQL에 장소 데이터를 저장"""
+# DB 커서 사용을 위한 컨텍스트 매니저 정의
+@contextmanager
+def db_cursor():
+    # MySQL 연결 생성
     connection = get_connection()
+    # 쿼리 실행을 위한 커서 생성
     cursor = connection.cursor()
-
-    sql = """
-    INSERT INTO tbl_location (
-        place_id, location_name, description, latitude, longitude,
-        google_rating, user_ratings_total, place_img_url,
-        formatted_address, opening_hours, website, phone_number, region_id
-    )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    ON DUPLICATE KEY UPDATE
-        location_name=VALUES(location_name),
-        description=VALUES(description),
-        latitude=VALUES(latitude),
-        longitude=VALUES(longitude),
-        google_rating=VALUES(google_rating),
-        user_ratings_total=VALUES(user_ratings_total),
-        place_img_url=VALUES(place_img_url),
-        formatted_address=VALUES(formatted_address),
-        opening_hours=VALUES(opening_hours),
-        website=VALUES(website),
-        phone_number=VALUES(phone_number),
-        region_id=VALUES(region_id);
-    """
     try:
-        # SQL 실행
-        cursor.execute(sql, data[:-1])  # 태그 제외 데이터 삽입
-        connection.commit()
+        yield cursor  # with 블록 내부에서 cursor 사용
+        connection.commit()  # 예외 없으면 커밋
+    except:
+        connection.rollback()  # 예외 발생 시 롤백
+        raise  # 예외 다시 던지기 (상위에서 처리)
+    finally:
+        cursor.close()  # 커서 닫기
+        connection.close()  # 연결 닫기
 
-        # 저장된 location_id 가져오기
+# 장소 데이터를 DB에 저장하는 함수
+def save_to_database(data):
+    with db_cursor() as cursor:
+        # 장소 정보를 INSERT 또는 UPDATE (중복 place_id 처리)
+        sql = """
+        INSERT INTO tbl_location (
+            place_id, location_name, description, latitude, longitude,
+            google_rating, user_ratings_total, place_img_url,
+            formatted_address, opening_hours, website, phone_number, region_id
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON DUPLICATE KEY UPDATE
+            location_name=VALUES(location_name),
+            description=VALUES(description),
+            latitude=VALUES(latitude),
+            longitude=VALUES(longitude),
+            google_rating=VALUES(google_rating),
+            user_ratings_total=VALUES(user_ratings_total),
+            place_img_url=VALUES(place_img_url),
+            formatted_address=VALUES(formatted_address),
+            opening_hours=VALUES(opening_hours),
+            website=VALUES(website),
+            phone_number=VALUES(phone_number),
+            region_id=VALUES(region_id);
+        """
+        cursor.execute(sql, data[:-1])  # 태그를 제외한 13개 필드 삽입
+        # 저장된 location_id를 다시 조회
         cursor.execute("SELECT location_id FROM tbl_location WHERE place_id = %s", (data[0],))
         location_id = cursor.fetchone()[0]
         print(f"[DEBUG] 저장된 location_id: {location_id}")
         return location_id
-    except Exception as e:
-        print(f"[ERROR] 장소 저장 실패: {e}")
-        return None
-    finally:
-        cursor.close()
-        connection.close()
 
+# 태그 데이터를 tbl_tag에 저장하고 ID 리스트 반환
 def save_tags(tags):
-    """
-    태그 데이터를 tbl_tag에 저장하고 고유 tag_id 리스트를 반환
-    """
-    connection = get_connection()
-    cursor = connection.cursor()
-
     tag_ids = []
-    for tag in tags:
-        try:
-            # 태그가 이미 존재하는지 확인
-            cursor.execute("SELECT tag_id FROM tbl_tag WHERE tag_name = %s", (tag,))
-            result = cursor.fetchone()
-            if result:
-                print(f"Tag 이미 존재함 : {tag} (ID: {result[0]})")
-                tag_ids.append(result[0])  # 기존 태그 ID 추가
-            else:
-                # 새로운 태그 삽입
-                cursor.execute("INSERT INTO tbl_tag (tag_name) VALUES (%s)", (tag,))
-                tag_id = cursor.lastrowid
-                tag_ids.append(tag_id)  # 삽입된 태그 ID 추가
-                print(f"새 tag : {tag} (ID: {tag_id})")
-        except Exception as e:
-            print(f"예상치 못한 에러: {tag}. Error: {e}")
-
-    connection.commit()
-    cursor.close()
-    connection.close()
+    with db_cursor() as cursor:
+        for tag in tags:
+            try:
+                # 이미 있는 태그인지 확인
+                cursor.execute("SELECT tag_id FROM tbl_tag WHERE tag_name = %s", (tag,))
+                result = cursor.fetchone()
+                if result:
+                    # 이미 있는 경우 기존 ID 사용
+                    print(f"Tag 이미 존재함 : {tag} (ID: {result[0]})")
+                    tag_ids.append(result[0])
+                else:
+                    # 새 태그 삽입
+                    cursor.execute("INSERT INTO tbl_tag (tag_name) VALUES (%s)", (tag,))
+                    tag_id = cursor.lastrowid
+                    tag_ids.append(tag_id)
+                    print(f"새 tag : {tag} (ID: {tag_id})")
+            except Exception as e:
+                print(f"예상치 못한 에러: {tag}. Error: {e}")
     return tag_ids
 
-
+# 장소와 태그 간의 연결 관계를 저장
 def save_location_tags(location_id, tag_ids):
-    """
-    장소와 태그 간의 관계를 tbl_location_tag에 저장
-    """
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    for tag_id in tag_ids:
-        try:
-            cursor.execute("""
-                INSERT IGNORE INTO tbl_location_tag (location_id, tag_id)
-                VALUES (%s, %s)
-            """, (location_id, tag_id))
-            print(f"Inserted relationship: Location ID {location_id}, Tag ID {tag_id}")
-        except Exception as e:
-            print(f"Error inserting relationship: Location ID {location_id}, Tag ID {tag_id}. Error: {e}")
-
-
-
-    connection.commit()
-    cursor.close()
-    connection.close()
+    with db_cursor() as cursor:
+        for tag_id in tag_ids:
+            try:
+                # 관계 테이블에 중복 없이 삽입
+                cursor.execute("""
+                    INSERT IGNORE INTO tbl_location_tag (location_id, tag_id)
+                    VALUES (%s, %s)
+                """, (location_id, tag_id))
+                print(f"장소-태그 연결 완료: Location ID {location_id}, Tag ID {tag_id}")
+            except Exception as e:
+                print(f"장소-태그 연결 오류: Location ID {location_id}, Tag ID {tag_id}. Error: {e}")

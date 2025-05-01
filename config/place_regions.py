@@ -22,7 +22,7 @@ REGION_CONFIGS = {
         "types": PLACE_TYPES                # 태그 타입
     },
     "오사카": {
-        "region_id": 4,                     # 도시코드
+        "region_id": 3,                     # 도시코드
         "location": "34.6707, 135.4982",     # 위도, 경도
         "radius": 1000,                     # 주위 반경 1000 == 1KM
         "types": PLACE_TYPES                # 태그 타입

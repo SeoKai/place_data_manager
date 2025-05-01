@@ -9,6 +9,7 @@ def extract_photo_url(photos, api_key):
     photo_reference = photos[0].get("photo_reference")
     return f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_reference}&key={api_key}"
 
+
 def fetch_place_details(place_id, api_key):
     """Place Details API를 호출하여 디테일 데이터 가져오기"""
     params = {
@@ -32,42 +33,59 @@ def fetch_place_details(place_id, api_key):
         }
     return {}
 
-def process_place(place, api_key, region_id):
-    """Google Places + Place Details 데이터를 합쳐서 반환"""
+# 추출하는 함수
+def parse_basic_info(place, api_key):
+    return {
+        "place_id": place.get("place_id"),  # Google Place ID
+        "location_name": place.get("name", "정보 없음"),  # 장소 이름
+        "description": "",  # 설명은 초기엔 비워둠 (나중에 Selenium 등으로 채움)
+        "latitude": place["geometry"]["location"]["lat"],  # 위도
+        "longitude": place["geometry"]["location"]["lng"],  # 경도
+        "google_rating": place.get("rating", 0.0),  # 평점 (없으면 0.0)
+        "user_ratings_total": place.get("user_ratings_total", 0),  # 리뷰 수 (없으면 0)
+        "place_img_url": extract_photo_url(place.get("photos", []), api_key),  # 첫 번째 사진 URL 생성
+        "translated_types": [
+            TYPE_TRANSLATIONS.get(tag, tag)  # 영어 태그를 한글로 변환
+            for tag in place.get("types", [])
+            if TYPE_TRANSLATIONS.get(tag) is not None
+        ]
+    }
 
-    # 기본 정보
-    place_id = place.get("place_id")
-    location_name = place.get("name", "정보 없음")
-    description = ""
-    latitude = place["geometry"]["location"]["lat"]
-    longitude = place["geometry"]["location"]["lng"]
-    google_rating = place.get("rating", 0.0)
-    user_ratings_total = place.get("user_ratings_total", 0)
-    place_img_url = extract_photo_url(place.get("photos", []), api_key)
-
-    # 태그 변환 (영어 → 한국어) 및 필터링
-    place_types = place.get("types", [])
-    translated_types = [
-        TYPE_TRANSLATIONS.get(tag, tag) for tag in place_types if TYPE_TRANSLATIONS.get(tag) is not None
-    ]
-
-    # Place Details API 호출
+# 상세 정보를 가져오는 함수
+def parse_details(place_id, api_key):
     details = fetch_place_details(place_id, api_key)
 
-    # opening_hours 리스트를 문자열로 변환
+    # 영업시간이 리스트로 들어올 경우 문자열로 합침
     opening_hours = details.get("opening_hours", "영업시간 정보 없음")
-    if isinstance(opening_hours, list):  # 리스트인 경우 문자열로 병합
+    if isinstance(opening_hours, list):
         opening_hours = ", ".join(opening_hours)
 
+    return {
+        "formatted_address": details.get("formatted_address", "정보 없음"),  # 주소
+        "opening_hours": opening_hours,  # 영업시간
+        "website": details.get("website", "웹사이트 없음"),  # 웹사이트 URL
+        "phone_number": details.get("phone_number", "전화번호 없음")  # 전화번호
+    }
 
-    # 반환
+# 장소 데이터를 구성하는 메인 함수
+def process_place(place, api_key, region_id):
+    basic = parse_basic_info(place, api_key)  # 기본 정보 추출
+    details = parse_details(basic["place_id"], api_key)  # 상세 정보 조회
+
+    # 튜플로 반환 (DB 저장용 데이터 포맷)
     return (
-        place_id, location_name, description, latitude, longitude,
-        google_rating, user_ratings_total, place_img_url,
-        details.get("formatted_address", "정보 없음"),
-        opening_hours,
-        details.get("website", "웹사이트 없음"),
-        details.get("phone_number", "전화번호 없음"),
-        region_id,  # 하드코딩된 region_id 추가
-        translated_types
+        basic["place_id"],
+        basic["location_name"],
+        basic["description"],
+        basic["latitude"],
+        basic["longitude"],
+        basic["google_rating"],
+        basic["user_ratings_total"],
+        basic["place_img_url"],
+        details["formatted_address"],
+        details["opening_hours"],
+        details["website"],
+        details["phone_number"],
+        region_id,  # 전달받은 지역 ID
+        basic["translated_types"]
     )
