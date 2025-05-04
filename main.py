@@ -1,19 +1,29 @@
+import argparse
 from config.place_regions import REGION_CONFIGS
 from core.collector import collect_places
-from enricher.enricher_main import enrich_descriptions
-
+from enricher.enricher_main import main as enrich_descriptions
 
 def main():
-    region = REGION_CONFIGS["교토"]  # 원하는 지역으로 수정
+    parser = argparse.ArgumentParser(description="장소 수집 및 설명 enrichment 실행")
+    parser.add_argument("--region", required=True, help="수집할 지역명 (예: 도쿄, 교토, 오사카, 후쿠오카)")
+    args = parser.parse_args()
 
-    print("[STEP 1] 장소 수집 시작")
+    region_name = args.region
+
+    if region_name not in REGION_CONFIGS:
+        print(f"[ERROR] '{region_name}' 지역은 존재하지 않습니다.")
+        print(f"[INFO] 사용 가능한 지역: {', '.join(REGION_CONFIGS.keys())}")
+        return
+
+    region = REGION_CONFIGS[region_name]
+
+    print(f"[STEP 1] 장소 수집 시작: {region_name}")
     collect_places(**region)
 
-    print("[STEP 2] 설명 수집 시작")
-    enrich_descriptions()
+    print(f"[STEP 2] 설명 수집 시작: {region_name}")
+    enrich_descriptions(region_id=region["region_id"])
 
     print("[DONE] 전체 작업 완료")
-
 
 if __name__ == "__main__":
     main()
