@@ -16,7 +16,7 @@ DESCRIPTION_SELECTORS = [
 def get_driver():
     """Chrome WebDriver 생성 (시크릿 모드, 창 표시)"""
     options = Options()
-    # options.add_argument("--headless")  # 테스트용으로 창 표시
+    options.add_argument("--headless")
     options.add_argument("--incognito")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")

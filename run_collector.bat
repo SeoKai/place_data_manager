@@ -1,8 +1,23 @@
 @echo off
-set /p REGION=ìˆ˜ì§‘í•  ì§€ì—­ëª…ì„ ìž…ë ¥í•˜ì„¸ìš” (ì˜ˆ: ë„ì¿„, êµí† , ì˜¤ì‚¬ì¹´, í›„ì¿ ì˜¤ì¹´):
+
+echo [HandTrip ¼öÁý ½Ã½ºÅÛ]
+
+set /p REGION=¼öÁýÇÒ Áö¿ª¸íÀ» ÀÔ·ÂÇÏ¼¼¿ä (¿¹: µµÄì, ±³Åä, ¿À»çÄ«, ÈÄÄí¿ÀÄ«):
+set /p DRYRUN=dry-run ¸ðµå·Î ½ÇÇàÇÏ½Ã°Ú½À´Ï±î? (y/n):
+set /p SKIP_DESC=¼³¸í ¼öÁýÀ» »ý·«ÇÏ½Ã°Ú½À´Ï±î? (y/n):
+
+set OPTIONS=
+
+if /I "%DRYRUN%"=="y" (
+    set OPTIONS=%OPTIONS% --dry-run
+)
+
+if /I "%SKIP_DESC%"=="y" (
+    set OPTIONS=%OPTIONS% --skip-description
+)
 
 echo.
-echo [INFO] ì„ íƒí•œ ì§€ì—­: %REGION%
-python main.py --region %REGION%
+echo [½ÇÇà Áß] python main.py --region %REGION% %OPTIONS%
+python main.py --region %REGION% %OPTIONS%
 
 pause
