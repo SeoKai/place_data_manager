@@ -1,15 +1,13 @@
+# config/db_config.py
+
 import os
 from dotenv import load_dotenv
 
-# .env 파일 로드
-load_dotenv()
-
-# 환경변수에서 값 가져오기
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../.env"))
 
 DB_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": DB_PASSWORD,  # MySQL 비밀번호
-    "database": "placedata"  # 데이터베이스 이름
+    "host": os.getenv("DB_HOST"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "database": os.getenv("DB_NAME")
 }

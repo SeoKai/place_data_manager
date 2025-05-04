@@ -1,4 +1,4 @@
-from enricher.db_operations import get_places_without_description, update_place_description
+from database.enricher_db import get_places_without_description, update_place_description
 from enricher.selenium_scraper import scrape_place_description
 
 def main(region_id=None, dry_run=False):

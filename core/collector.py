@@ -1,7 +1,7 @@
 # core/collector.py
 
 from config.api_config import API_KEY
-from database.db_operations import save_to_database, save_tags, save_location_tags
+from database.location_db import save_to_database, save_tags, save_location_tags
 from utils.google_places import fetch_all_places
 from utils.helpers import process_place
 from filters.filters import filter_place

@@ -1,3 +1,5 @@
+# main.py
+
 import argparse
 from config.place_regions import REGION_CONFIGS
 from core.collector import collect_places
@@ -19,7 +21,7 @@ def main():
     region = REGION_CONFIGS[region_name]
 
     print(f"[STEP 1] 장소 수집 시작: {region_name}")
-    collect_places(**region, dry_run=args.dry_run)  # ✅ 전달
+    collect_places(**region, dry_run=args.dry_run)
 
     if not args.skip_description:
         print(f"[STEP 2] 설명 수집 시작: {region_name}")
