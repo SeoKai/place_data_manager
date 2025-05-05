@@ -1,5 +1,5 @@
 @echo off
-echo [HandTrip 수집 시스템]
+echo [Place Data 수집 시스템]
 
 IF NOT EXIST .env (
     echo [WARNING] .env 파일이 없습니다.

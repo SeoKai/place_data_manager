@@ -2,7 +2,17 @@
 
 > 지역 기반의 장소 데이터를 Google Places API로 수집하고,
 > 부족한 설명 정보를 Selenium을 통해 Google Maps에서 자동으로 보완하여
-> **MySQL 데이터베이스에 저장하는 자동화 시스템**
+> **MySQL 데이터베이스에 저장하는 자동화 시스템 입니다.**
+
+## 구동화면
+
+> **추가예정**
+
+---
+### CLI 기반 실행
+
+> 본 프로젝트는 단순 실행이 아닌, 지역 설정, 옵션 조절 등이 가능한
+> **CLI(Command Line Interface) 프로그램**입니다.
 
 ---
 
@@ -33,3 +43,12 @@ place_data_manager/
 ├── run_collector.bat         # Windows CLI 실행 스크립트
 └── .env                      # API 키 등 환경 변수
 ```
+
+## E-R 다이어그램
+![ERD.PNG](..%2F..%2F..%2F..%2FERD.PNG)
+> 본장소와 태그 간의 N:M 관계를 지원하기 위해 다음과 같은 테이블 구조로 구성되어 있습니다
+> - **tbl_location**: Google Places API를 통해 수집된 장소의 상세 정보를 저장합니다.
+> - **tbl_tag**: 장소에 부여할 수 있는 태그 목록을 관리합니다.
+> - **tbl_location_tag**: 장소와 태그 간의 다대다(N:M) 관계를 연결하는 매핑 테이블입니다.
+
+---
