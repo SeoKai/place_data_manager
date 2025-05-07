@@ -4,7 +4,7 @@
 > 부족한 설명 정보를 Selenium을 통해 Google Maps에서 자동으로 보완하여
 > **MySQL 데이터베이스에 저장하는 자동화 시스템 입니다.**
 
-![장소수집.PNG](..%2F..%2F..%2F..%2F%C0%E5%BC%D2%BC%F6%C1%FD.PNG)
+![장소수집](https://github.com/user-attachments/assets/729b968f-4537-432c-965e-d07430f516dd)
 
 ## 구동화면
 
