@@ -123,7 +123,7 @@ pause
 
 `config/place_regions.py` 파일을 수정하면 수집 위치(위도/경도), 반경, 장소 유형을 자유롭게 설정할 수 있습니다.
 
-EX)
+**EX)**
 
 ```python
 REGION_CONFIGS = {
